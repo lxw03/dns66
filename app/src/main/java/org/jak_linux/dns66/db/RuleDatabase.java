@@ -134,7 +134,7 @@ public class RuleDatabase {
                 throw new InterruptedException("Interrupted");
 
             database.beginTransaction();
-            if (createOrUpdateItem(item, priority) && loadItem(context, item))
+            if (createOrUpdateItem(item, priority++) && loadItem(context, item))
                 database.setTransactionSuccessful();
             database.endTransaction();
         }
