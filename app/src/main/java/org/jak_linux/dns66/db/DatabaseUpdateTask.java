@@ -40,6 +40,7 @@ public class DatabaseUpdateTask extends AsyncTask<Configuration, String, Void> {
             database.database.beginTransactionNonExclusive();
 
             try {
+                database.database.delete("ruleset", "id = ?", new String[]{Long.toString(hostfile.id)});
                 if (!database.createOrUpdateItem(hostfile, priority))
                     throw new IOException("Cannot create hostfile");
                 if (!hostfile.location.contains("/")) {
