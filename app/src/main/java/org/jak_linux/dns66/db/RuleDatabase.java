@@ -11,6 +11,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
+import android.database.sqlite.SQLiteStatement;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -38,6 +40,7 @@ public class RuleDatabase {
 
     private ContentValues hostsetValues = new ContentValues();
     private ContentValues hostValues = new ContentValues();
+    private SQLiteStatement lookupStatement = null;
 
     /**
      * Parse a single line in a hosts file
@@ -73,15 +76,17 @@ public class RuleDatabase {
      * @return true if the host is blocked, false otherwise.
      */
     public boolean isBlocked(String host) {
-        Cursor c = database.query("fullrule", new String[]{"action"}, "host = ?", new String[]{host}, null, null, "priority DESC", "1");
+        if (lookupStatement == null) {
+            lookupStatement = database.compileStatement("select action from fullrule where host = ?");
+        }
 
-        boolean result = c.moveToNext();
+        lookupStatement.bindString(1, host);
 
-        if (result)
-            result = c.getInt(0) == Configuration.Item.STATE_DENY;
-
-        c.close();
-        return result;
+        try {
+            return lookupStatement.simpleQueryForLong() == Configuration.Item.STATE_DENY;
+        } catch (SQLiteDoneException e) {
+            return false;
+        }
     }
 
     /**
